@@ -3,6 +3,40 @@ const {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Text} = Rech
 const { PieChart, Pie, Sector, Cell } = Recharts;
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
+const COLOR_MAP = {
+    1: [ 'red'],
+    2: ['#5ab4ac','#d8b365'],
+    3: ['#e5f5f9',
+        '#99d8c9',
+        '#2ca25f',],
+    4: ['#edf8fb',
+        '#b2e2e2',
+        '#66c2a4',
+        '#238b45',],
+    5: ['#a6611a',
+        '#dfc27d',
+        '#dddddd',
+        '#80cdc1',
+        '#018571'],
+    6: ['#edf8fb',
+        '#ccece6',
+        '#99d8c9',
+        '#66c2a4',
+        '#2ca25f',
+        '#006d2c'],
+    11: ['#543005',
+         '#8c510a',
+         '#bf812d',
+         '#dfc27d',
+         '#f6e8c3',
+         '#f5f5f5',
+         '#c7eae5',
+         '#80cdc1',
+         '#35978f',
+         '#01665e',
+         '#003c30']
+}
+
 
 //     peruspäiväraha + työmarkkinatuki sitten asumistuki + toimeentulotuki ja sen jälkeen siihen ansiosidonnainen
 
@@ -16,7 +50,7 @@ class Main extends React.Component {
         }
     }
     async componentDidMount() {
-        const data = await d3.csv("jtr-data.csv");
+        const data = await d3.csv("jtr-data-2019.csv");
         const dataMap = {}
         data.columns.forEach((col,idx)=>{
             dataMap[col] = []
@@ -24,6 +58,7 @@ class Main extends React.Component {
                 dataMap[col].push(row[col])
             })
         })
+        console.log(dataMap);
         this.setState({data: data, map: dataMap})
     }
     render() {
@@ -33,8 +68,9 @@ class Main extends React.Component {
                 <h1>Jyväskylä Trail Runners kysely</h1>
                 <p>
                 Jyväskylä Trail Runners facebook-ryhmässä pyydettiin ihmisiä
-                vastaamaan laadittuun kyselyyn. Vastausten määrä oli varsin hyvä 98
-                vastausta 888 ryhmäläisen joukosta (lukumäärä tarkistettu 15.10.2018).
+                vastaamaan laadittuun kyselyyn vuoden 2019 loppupuolella.
+                Vastausten määrä oli 63 (vuonna 2018, 98 kpl)
+                ryhmäläisten kokonaismäärä oli 1056 (lukumäärä tarkistettu 20.1.2020, vuonna 2018, 888 kpl).
                 </p>
 
                 <Participants map={this.state.map}/>
@@ -45,13 +81,15 @@ class Main extends React.Component {
                 <hr noshade="" />
                 <Training map={this.state.map}/>
                 <hr noshade="" />
+                <BestInJTR map={this.state.map}/>
+                <hr noshade="" />
                 <h3>Yhteenveto</h3>
 
                 Jyväskylä Trail Runners -ryhmän juoksija on keskimäärin keski-ikäinen
-                nainen joka ajaa kolmesta neljään kertaan viikossa kello viiden
-                jälkeen Laajavuoreen treenaamaan puoleksitoistatunniksi
-                kymmentä kilometriä neulasbaanaa nauttiakseen luonnosta.
-                Porukkalenkeillä hän on käynyt ja piti siitä.
+                joka ajaa viisi kertaan viikossa kello viiden
+                jälkeen Halssilaan treenaamaan puoleksitoistatunniksi
+                neulasbaanaa nauttiakseen luonnosta.
+                Porukkalenkit ovat ryhmän parasta antia ja toki hän pitää niistä.
                 Hän haaveilee polkujuoksusta tuntureilla muttei kykene siihen ajanpuutteen vuoksi.
 
             </div>
@@ -102,15 +140,14 @@ class Participants extends React.Component {
         let data = this.props.map['Ikä?'] || [];
         let ages = _.pairs(counts(data)).map(p=>{return { name: p[0], value: p[1]}})
         ages.sort((a,b)=>{ return a.name.localeCompare(b.name) })
-        if (ages.length)
-            ages.push(ages.shift())
+        //if (ages.length)
+        //    ages.push(ages.shift())
 
         let sex = _.pairs(counts(this.props.map['Sukupuoli?'] || [])).map(p=>{return { name: p[0], value: p[1]}})
         sex.sort()
 
         const sexLabel = params => renderCustomizedLabel(params, sex)
         const agesLabel = params => renderCustomizedLabel(params, ages)
-
       	return (
             <div>
                 <h2>Kyselyn taustatiedot</h2>
@@ -124,14 +161,13 @@ class Participants extends React.Component {
                         fill="#8884d8"
                     >
                         {
-                            sex.map((entry, index) => <Cell fill={COLORS[index % COLORS.length]}/>)
+                            sex.map((entry, index) => <Cell fill={COLOR_MAP[sex.length][index]}/>)
                         }
                     </Pie>
                 </PieChart>
 
-                { sum(sex) } vastaajaa kertoi kyselyn alkutietoihin liittyvän sukupuolen. Tilastollisesti on melko todennäköistä
-                törmätä yhteislenkillä naisjuoksijaan. Varsinkin jos juoksee liian lähellä eikä kerkeä jarruttamaan 😅
-
+                { sum(sex) } vastaajaa kertoi kyselyn alkutietoihin liittyvän sukupuolen. 
+                Viimevuodesta poiketen sukupuolijakauma on naisten 2/3 ylivoimasta tasaantunut.
 
                 <h3>Vastaajien ikä</h3>
 
@@ -143,12 +179,12 @@ class Participants extends React.Component {
                         fill="#8884d8"
                     >
                         {
-                        ages.map((entry, index) => <Cell fill={COLORS[index % COLORS.length]}/>)
+                        ages.map((entry, index) => <Cell fill={COLOR_MAP[ages.length][index]}/>)
                         }
                     </Pie>
                 </PieChart>
                 { sum(ages) } vastaajaa kertoi oman ikäryhmänsä. Pääosa juoksijoista on keski-iän molemmin puolin.
-                Aivan nuorta sakkia polkujuoksu ei vielä innosta.
+                Aivan nuorta sakkia polkujuoksu ei vieläkään innosta.
 
             </div>
         );
@@ -182,6 +218,19 @@ class StartingLevel extends React.Component {
 
         let fitnes = _.pairs(counts(this.props.map['Viimeisen vuoden aikana teen vähintään puolituntia kestävää liikuntaa'] || [])).map(p=>{return { name: p[0], value: p[1]}})
         const fitnesLabel = params => renderCustomizedLabel(params, fitnes)
+        const fitnesSort = [
+            "noin kerran viikossa",
+            "yleensä kahdesti viikossa",
+            "kolmesti viikossa",
+            "neljästi viikossa",
+            "viidesti viikossa",
+            "kuudesti viikossa",
+            "seitsemästi viikossa",
+            "8 kertaa viikossa",
+            "9 kertaa viikossa",
+            "10 kertaa viikossa",
+            "12 kertaa viikossa"]
+        fitnes.sort((a,b) => fitnesSort.indexOf(a.name) - fitnesSort.indexOf(b.name))
 
       	return (
             <div>
@@ -215,13 +264,12 @@ class StartingLevel extends React.Component {
                         fill="#8884d8"
                     >
                         {
-                        fitnes.map((entry, index) => <Cell fill={COLORS[index % COLORS.length]}/>)
+                        fitnes.map((entry, index) => <Cell fill={COLOR_MAP[fitnes.length][index]}/>)
                         }
                     </Pie>
                 </PieChart>
                 { sum(fitnes) } vastaajaa kertoi kuinka usein on liikkunut viikottain viimeisen vuoden aikana.
-                Hämmästyttävän moni (38%) saa itsensä liikkeelle yli viidesti viikossa ja 3-4 kertaa viikossa liikkujia on puolet (50%).
-                Sohvan painovoima on voitettu! 💪
+                Ryhmäläiset edustavat varsin liikkuvaa sakkia 💪
             </div>
         );
     }
@@ -245,8 +293,7 @@ class DreamsAndGoals extends React.Component {
         let dream = this.props.map['Haaveissani olisi'] || []
         let dreamsData = countListOptions(dream)
         dreamsData.sort((a,b)=>b.value-a.value)
-
-        let wall = this.props.map['Isoimmat esteet haaveilleni ovat kai'] || []
+        let wall = this.props.map['Isoimmat esteet haaveilleni ovat kaiketi'] || []
         let wallsData = countListOptions(wall)
         wallsData.sort((a,b)=>b.value-a.value)
 
@@ -276,9 +323,8 @@ class DreamsAndGoals extends React.Component {
                 </BarChart>
 
                 Tavoitteisiin vastasi { sumNonEmpty(goal) } juoksijaa.
-                Tärkeimmäksi tavoitteeksi nousi luonnosta nauttiminen,
-                tutustuminen uusiin juoksukamuihin ja juoksumatkan lisääminen.
-                Mitäpä tähän lisäämään, olette puhuneet - ugh!
+                Tärkeimpänä tavoitteena pysyi viimevuodesta luonnosta nauttiminen.
+                Uutena nousijana listalle kakkoseksi kiilasi omien haasteiden voittaminen.
 
                 <h3>Haaveissani on juosta</h3>
 
@@ -308,7 +354,7 @@ class DreamsAndGoals extends React.Component {
 
                 <h3>Suurimmat esteet haaveilleni ovat</h3>
 
-                <BarChart width={800} height={300} data={wallsData}
+                <BarChart width={800} height={500} data={wallsData}
                     layout="vertical" 
                     margin={{top: 5, right: 30, left: 250, bottom: 5}}>
                     <CartesianGrid strokeDasharray="3 3"/>
@@ -320,7 +366,6 @@ class DreamsAndGoals extends React.Component {
 
                 { sumNonEmpty(wall) } vastasi suurimpiin esteisiin haaveiden toteuttamiseen.
                 Yllätys yllätys, suurin este harrastuksille on ajanpuute 😊
-                Laiskuuteen auttaa kun sopii yhteislenkin kaverin kanssa 😇
             </div>
         );
     }
@@ -332,17 +377,32 @@ class Training extends React.Component {
         let participated = _.pairs(counts(this.props.map['Olen käynyt yhteislenkillä'] || [])).map(p=>{return { name: p[0], value: p[1]}})
         const participatedLabel = params => renderCustomizedLabel(params, participated)
 
-        let place = this.props.map['Minulle käteviä treenipaikkoja olisivat '] || []
-        place = place.map(p=>p.replace(', ',';').replace(/ /g, '').replace('!',''))
+        let training = this.props.map['Yhteislenkki oli (jos osallistuit)'] || []
+        let trainingData = countListOptions(training)
+        trainingData.sort((a,b)=>b.value-a.value)
+
+        let place = this.props.map['Minulle käteviä treenipaikkoja olisivat'] || []
+        place = place.map(p=>p.replace(', ',';').replace(/ /g, ' ').replace('!',''))
         let placeData = countListOptions(place)
         placeData.sort((a,b)=>b.value-a.value)
-        placeData = placeData.splice(0,10)
+        console.log(place, placeData)
+        const rem = [
+            'Ihan sama - kaikki on hyvä',
+            'autolla pääsee',
+            'Kaikki käy',
+            'Jos hyvissä ajoin tietää',
+            'niin pääsee autollakin muualle.',
+            'Missä vaan on polkua :)',
+            'Kimppakyydillä käy kaikki. Pyörällä lähimaastot. '
+        ]
+        rem.forEach(del => placeData.splice(placeData.findIndex(elem => elem.name===del), 1))
+        //placeData = placeData.splice(0,10)
 
         let logistics = this.props.map['Käyn treeneissä yleensä'] || []
         let logisticsData = countListOptions(logistics)
         logisticsData.sort((a,b)=>b.value-a.value)
         logisticsData.pop()
-        logisticsData.pop()
+        //logisticsData.pop()
 
         const times = ["5-7", "7-10", "10-12", "12-15", "15-17", "17-19", "19-21", ">21"]
 
@@ -384,7 +444,7 @@ class Training extends React.Component {
         let power = this.props.map['Treenin tehokkuus tulisi olla mielestäni'] || []
         let powerData = countListOptions(power)
         powerData.sort((a,b)=>b.value-a.value)
-        powerData = powerData.splice(0,6)
+        //powerData = powerData.splice(0,6)
 
 
         let ground = this.props.map['Treenimaaston tulisi sisältää'] || []
@@ -418,19 +478,23 @@ class Training extends React.Component {
 
                 <h3>Yhteislenkki oli mielestäni</h3>
 
-                54/65 eli 83% piti yhteislenkkiä "ihan sopivana kaikin puolin ja mukavana" 👍
-                <p/>
-                Kriittisempääkin sävyä löytyi...
-                <p/>
-                Emme kuitenkaan lähde kritiikkiä tässä avaamaan, koska
-                <div>a) positiivisuuden kautta</div>
-                <div>b) tämä on harrastus jota jokainen tekee vapaaehtoisuudesta käsin</div>
-                <div>c) jos osaat paremmin, niin siitä vaan toimeen 😀</div>
-                
+                <BarChart width={800} height={300} data={trainingData}
+                    layout="vertical" 
+                    margin={{top: 5, right: 30, left: 380, bottom: 5}}>
+                    <CartesianGrid strokeDasharray="3 3"/>
+                    <XAxis type="number"/>
+                    <YAxis dataKey="name" type="category" tick={{width: 450 }} />
+                    <Tooltip/>
+                    <Bar dataKey="value" fill="#3a8887" />
+                </BarChart>
+
+                Saimme { sumNonEmpty(training) } vastausta miltä yhteislenkki maistui.
+                Olemme onnistuneet pääosin ja rohkaisen kaikkia jatkossa järjestämään yhteislenkkejä niin saadaan eri pituisia ja nopeuksisia lenkkejä.
+                Kengät saa jatkossakin kastua 😂
 
                 <h3>Kätevät treenipaikat</h3>
 
-                <BarChart width={800} height={300} data={placeData}
+                <BarChart width={800} height={600} data={placeData}
                     layout="vertical" 
                     margin={{top: 5, right: 30, left: 250, bottom: 5}}>
                     <CartesianGrid strokeDasharray="3 3"/>
@@ -440,13 +504,8 @@ class Training extends React.Component {
                     <Bar dataKey="value" fill="#3a8887" />
                 </BarChart>
 
-                Laajis näyttää voittavan kätevimmän treenipaikan tittelin. Siellä on mm. riittävän iso autoparkki.
-                Iso ilmainen parkki löytyy myös Touruvuoren, Keljon-Kankaan ja Myllyjärven läheltä.
-                Halssilassa taas autopaikkoja on vähän, mutta lenkki siellä lähellä ihmisiä tai sitten Karmitsa on vaan niin vetoava 😍
-                <p/>
-                Yksittäisiä ehdotuksia tuli myös Tiituspohja, Heinämäki, Multamäki,
-                Keskusta, Säykki, Mustalampi, Palokka, Hanhiperä, Kinkomaa ja Peurunka.
-                Nämä kaikki ovat paikkoja joissa varmasti tullaan juoksemaan jatkossakin.
+                { sumNonEmpty(place) } vastaajan mukaan Laajis näyttää hävinneen kätevimmän
+                treenipaikan tittelin Halssilalle viimevuodesta.
 
                 <h3>Logistiikka - siirtyminen treenipaikalle</h3>
 
@@ -461,7 +520,8 @@ class Training extends React.Component {
                 </BarChart>
 
                 Valtaosa juoksijoista tekee siirtymät treenimestoille omalla autolla.
-                Kyytiä tarvitsevat muistakaa jatkossakin kysellä ryhmässä, tämän tilaston valossa kyydin saanti on hyvin todennäköistä.
+                Kyytiä tarvitsevat muistakaa jatkossakin kysellä ryhmässä,
+                tämän tilaston valossa kyydin saanti on hyvin todennäköistä.
 
                 <h3>Paras treeniaika</h3>
 
@@ -472,11 +532,11 @@ class Training extends React.Component {
                     <XAxis dataKey="name" type="category"/>
                     <Tooltip/>
                     <Legend/>
-                    <Bar dataKey="Maanantai" fill={COLORS[0]} />
-                    <Bar dataKey="Tiistai" fill={COLORS[1]} />
-                    <Bar dataKey="Keskiviikko" fill={COLORS[2]} />
-                    <Bar dataKey="Torstai" fill={COLORS[3]} />
-                    <Bar dataKey="Perjantai" fill="#3a8887" />
+                    <Bar dataKey="Maanantai" fill={COLOR_MAP[5][0]} />
+                    <Bar dataKey="Tiistai" fill={COLOR_MAP[5][1]} />
+                    <Bar dataKey="Keskiviikko" fill={COLOR_MAP[5][2]} />
+                    <Bar dataKey="Torstai" fill={COLOR_MAP[5][3]} />
+                    <Bar dataKey="Perjantai" fill={COLOR_MAP[5][4]} />
                 </BarChart>
 
                 <BarChart width={800} height={300} data={weekendData}
@@ -506,7 +566,7 @@ class Training extends React.Component {
 
                 <h3>Treenien sopiva tehokkuus</h3>
 
-                <BarChart width={800} height={300} data={powerData}
+                <BarChart width={800} height={500} data={powerData}
                     layout="vertical" 
                     margin={{top: 5, right: 30, left: 450, bottom: 5}}>
                     <CartesianGrid strokeDasharray="3 3"/>
@@ -515,18 +575,6 @@ class Training extends React.Component {
                     <Tooltip/>
                     <Bar dataKey="value" fill="#3a8887" />
                 </BarChart>
-
-
-                Toivomuslistalla oli lisäksi:
-                <ul>
-                <li>Erilaisia kimppalenkkivaihtoehtoja eritasoisten juoksijoiden tarpeisiin. 😊</li>
-                <li>Olen hitaampi kuin etana tervassa ja se on suurin kynnys lenkeille. Toinen haaste on perheen ruoka-ajat, jolloin olisi oltava kotona.</li>
-                <li>Vaihtelevia treenejä ajallisesti ja tehoiltaan.</li>
-                <li>Vetotreenit</li>
-                <li>Jos ilottelu juoksun aikana tarkoittaa tekniikkaharjoitteita niin sitä :) Ei mielellään yrjöilylenkkejä - eikä raastoa. Lenkit kannattaisi varmaan jotenkin määritellä niin että kaikki tietäisivät mitä on tarjolla. Näin peruspirkko lenkkeilijä ei aina ymmärrä mitä kaikkea mielenkiintoista lenkeillänne tapahtuukaan. Voi sitten rajata hulluimmat ulkopuolelle tai valmistautua niihin vähän eri tavalla :) Ps.hyvä kysely! Lisäys seuraavaan kysymykseen: kaikkea ei tarvitse olla tarjolla joka lenkillä vaan tietty eri lenkeillä eri maastoja.. eli aina ei tartte olla helppoa neulaspolkua vaan eri kertoina eri juttuja?</li>
-                <li>Kunnon VK/MK-tööttejä</li>
-                <li>tekniikkaralleja voisi tehdä joskus porukalla</li>
-                </ul>
 
 
                 <h2>Polkupohja</h2>
@@ -560,6 +608,33 @@ class Training extends React.Component {
     }
 }
 
+class BestInJTR extends React.Component {
+    render() {
+
+        let best = this.props.map['Parasta yhteistoimintaa on ollut'] || []
+        best = countListOptions(best)
+        best.sort((a,b)=>b.value - a.value)
+        const bestLabel = params => renderCustomizedLabel(params, best)
+console.log(best)
+
+        return (
+            <div>
+                <h2>Parasta Jyväskylä Trail Runners toiminnassa on vuonna 2019 ollut</h2>
+
+                <BarChart width={800} height={300} data={best}
+                    layout="vertical" 
+                    margin={{top: 5, right: 30, left: 400, bottom: 5}}>
+                    <CartesianGrid strokeDasharray="3 3"/>
+                    <XAxis type="number"/>
+                    <YAxis dataKey="name" type="category"  tick={{width: 450 }}/>
+                    <Tooltip/>
+                    <Bar dataKey="value" fill="#3a8887" />
+                </BarChart>
+
+            </div>
+        );
+    }
+}
 
 
 ReactDOM.render(
