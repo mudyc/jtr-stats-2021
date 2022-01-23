@@ -65,7 +65,6 @@ class Main extends React.Component {
                 dataMap[col].push(row[col])
             })
         })
-        console.log(dataMap);
         this.setState({data: data, map: dataMap})
     }
     render() {
@@ -97,7 +96,7 @@ class Main extends React.Component {
                 joka ajaa viisi kertaan viikossa kello viiden
                 jälkeen Halssilaan treenaamaan puoleksitoistatunniksi
                 neulasbaanaa nauttiakseen luonnosta.
-                Porukkalenkit ovat ryhmän parasta antia ja toki hän pitää niistä.
+                Porukkalenkit ovat ryhmän parasta antia juoksukavereiden ohella ja toki hän pitää niistä.
                 Hän haaveilee polkujuoksusta tuntureilla muttei kykene siihen ajanpuutteen vuoksi.
 
             </div>
@@ -172,6 +171,7 @@ class Participants extends React.Component {
                             sex.map((entry, index) => <Cell fill={COLOR_MAP[sex.length][index]}/>)
                         }
                     </Pie>
+                    <Tooltip />
                 </PieChart>
 
                 { sum(sex) } vastaajaa kertoi kyselyn alkutietoihin liittyvän sukupuolen. 
@@ -185,10 +185,11 @@ class Participants extends React.Component {
                         outerRadius={120} 
                         fill="#8884d8"
                     >
-                        {
-                        ages.map((entry, index) => <Cell fill={COLOR_MAP[ages.length][index]}/>)
+                       {
+                           ages.map((entry, index) => <Cell fill={COLOR_MAP[ages.length][index]}/>)
                         }
                     </Pie>
+                    <Tooltip />
                 </PieChart>
                 { sum(ages) } vastaajaa kertoi oman ikäryhmänsä. Pääosa juoksijoista on keski-iän molemmin puolin.
 
@@ -315,7 +316,6 @@ function countListOptions(data, fixes={}){
     let all = []
     data.forEach(gs=>gs.split(';').forEach(g=>{ const h=fix(g); if (h != '') all.push(h)}))
     all = _.uniq(all)
-    console.log(fixes, all)
     let counts = _.object(all.map(g=>[g, 0]))
     data.forEach(gs=>gs.split(';').forEach(g=>{ const h=fix(g); if (h != '') counts[h]++}))
     return _.pairs(counts).map(p=>{return { name: p[0], value: p[1]}})
@@ -436,7 +436,7 @@ class Training extends React.Component {
         place = place.map(p=>p.replace(', ',';').replace(/ /g, ' ').replace('!',''))
         let placeData = countListOptions(place)
         placeData.sort((a,b)=>b.value-a.value)
-        console.log(place, placeData)
+
         const rem = [
             'Ihan sama - kaikki on hyvä',
             'autolla pääsee',
@@ -669,7 +669,6 @@ class BestInJTR extends React.Component {
         })
         best.sort((a,b)=>b.value - a.value)
         const bestLabel = params => renderCustomizedLabel(params, best)
-console.log(best)
 
         return (
             <div>
