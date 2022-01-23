@@ -24,6 +24,15 @@ const COLOR_MAP = {
         '#66c2a4',
         '#2ca25f',
         '#006d2c'],
+    9: ['#543005',
+        '#8c510a',
+        '#bf812d',
+        '#dfc27d',
+        '#f6e8c3',
+        '#f5f5f5',
+        '#c7eae5',
+        '#80cdc1',
+        '#35978f'],
     11: ['#543005',
          '#8c510a',
          '#bf812d',
@@ -38,8 +47,6 @@ const COLOR_MAP = {
 }
 
 
-//     peruspäiväraha + työmarkkinatuki sitten asumistuki + toimeentulotuki ja sen jälkeen siihen ansiosidonnainen
-
 
 class Main extends React.Component {
     constructor(props) {
@@ -50,7 +57,7 @@ class Main extends React.Component {
         }
     }
     async componentDidMount() {
-        const data = await d3.csv("jtr-data-2019.csv");
+        const data = await d3.csv("jtr-data-2021.csv");
         const dataMap = {}
         data.columns.forEach((col,idx)=>{
             dataMap[col] = []
@@ -64,13 +71,13 @@ class Main extends React.Component {
     render() {
         return (
             <div className="content">
-                <img src="metso.png"></img>
+                <img className="logo" src="metso.png"></img>
                 <h1>Jyväskylä Trail Runners kysely</h1>
                 <p>
                 Jyväskylä Trail Runners facebook-ryhmässä pyydettiin ihmisiä
-                vastaamaan laadittuun kyselyyn vuoden 2019 loppupuolella.
-                Vastausten määrä oli 63 (vuonna 2018, 98 kpl)
-                ryhmäläisten kokonaismäärä oli 1056 (lukumäärä tarkistettu 20.1.2020, vuonna 2018, 888 kpl).
+                vastaamaan laadittuun kyselyyn vuoden 2021 loppupuolella.
+                Vastausten määrä oli 48kpl (2019: 63 kpl, 2018, 98 kpl)
+                ryhmäläisten kokonaismäärä oli 1299 kpl (tarkastettu 6.1.2022, 2019: 1056 kpl, 2018: 888 kpl).
                 </p>
 
                 <Participants map={this.state.map}/>
@@ -83,8 +90,9 @@ class Main extends React.Component {
                 <hr noshade="" />
                 <BestInJTR map={this.state.map}/>
                 <hr noshade="" />
+                <LocalEvents map={this.state.map}/>
+                <hr noshade="" />
                 <h3>Yhteenveto</h3>
-
                 Jyväskylä Trail Runners -ryhmän juoksija on keskimäärin keski-ikäinen
                 joka ajaa viisi kertaan viikossa kello viiden
                 jälkeen Halssilaan treenaamaan puoleksitoistatunniksi
@@ -167,7 +175,6 @@ class Participants extends React.Component {
                 </PieChart>
 
                 { sum(sex) } vastaajaa kertoi kyselyn alkutietoihin liittyvän sukupuolen. 
-                Viimevuodesta poiketen sukupuolijakauma on naisten 2/3 ylivoimasta tasaantunut.
 
                 <h3>Vastaajien ikä</h3>
 
@@ -184,7 +191,6 @@ class Participants extends React.Component {
                     </Pie>
                 </PieChart>
                 { sum(ages) } vastaajaa kertoi oman ikäryhmänsä. Pääosa juoksijoista on keski-iän molemmin puolin.
-                Aivan nuorta sakkia polkujuoksu ei vieläkään innosta.
 
             </div>
         );
@@ -231,11 +237,24 @@ class StartingLevel extends React.Component {
             "10 kertaa viikossa",
             "12 kertaa viikossa"]
         fitnes.sort((a,b) => fitnesSort.indexOf(a.name) - fitnesSort.indexOf(b.name))
-
+        
+        let cooperAll = this.props.map['Viimeisin Cooper-tulokseni (valitse lähin)'] || []
+        const cooperX = cooperAll
+            .map((value, idx)=>{ return { sex: sexSet[idx], value } })
+            .filter(val => val.value != 'Ei tulosta' && val.value != '')
+        const cooper = _.range(3500,2000,-100).map(t=>{
+            const key = t+'m'
+            naiset:
+            return { len: key, 
+                    nainen: cooperX.filter(v=>v.value==key && v.sex=='nainen').length,
+                    mies: cooperX.filter(v=>v.value==key && v.sex=='mies').length,
+            }
+        })
+        
       	return (
             <div>
                 <h2>Lähtötaso</h2>
-                <h3>Viimeisen vuoden aikana juostu</h3>
+                <h3>Viimeisen vuoden aikana juostu (pisimmillään)</h3>
 
                 <BarChart width={600} height={300} data={combinedData}
                     layout="vertical"
@@ -250,8 +269,8 @@ class StartingLevel extends React.Component {
                 </BarChart>
 
                 { sum(runData) } vastasi kuinka pitkälle on pisimmillään juossut viimeisen vuoden aikana.
-                Aika moni ei ole vielä päässyt nauttimaan viikonlopun pitkistä mättömetrein. 
-                Tilastollisesti miehet painottuvat hieman pidemmille matkoille kuin naiset.
+                Aika tasaisesti sukupuoli jakautuu eri pituuksille. Vuonna 2019 miehet olivat 
+                yliedustettuina ultrapitkillä.
 
 
                 <h3>Viimeisen vuoden aikana teen vähintään puolituntia kestävää liikuntaa</h3>
@@ -262,25 +281,43 @@ class StartingLevel extends React.Component {
                         label={fitnesLabel}
                         outerRadius={120} 
                         fill="#8884d8"
-                    >
+                        >
                         {
-                        fitnes.map((entry, index) => <Cell fill={COLOR_MAP[fitnes.length][index]}/>)
+                            fitnes.map((entry, index) => <Cell fill={COLOR_MAP[fitnes.length][index]}/>)
                         }
                     </Pie>
                 </PieChart>
                 { sum(fitnes) } vastaajaa kertoi kuinka usein on liikkunut viikottain viimeisen vuoden aikana.
                 Ryhmäläiset edustavat varsin liikkuvaa sakkia 💪
+{/*
+            */}
+                <h3>Viimeisin Cooper tulokseni</h3>
+
+                <img src="cooper.png" ></img>
+
+                <BarChart width={800} height={400} data={cooper} >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="len" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="nainen" fill="#9c0507" />
+                    <Bar dataKey="mies" fill="#3a8887" />
+                </BarChart>
+
             </div>
         );
     }
 }
 
-function countListOptions(data){
+function countListOptions(data, fixes={}){
+    function fix(value) { const f = fixes[value]; if (f === '') return ''; return f || value }
     let all = []
-    data.forEach(gs=>gs.split(';').forEach(g=>{if (g != '') all.push(g)}))
+    data.forEach(gs=>gs.split(';').forEach(g=>{ const h=fix(g); if (h != '') all.push(h)}))
     all = _.uniq(all)
+    console.log(fixes, all)
     let counts = _.object(all.map(g=>[g, 0]))
-    data.forEach(gs=>gs.split(';').forEach(g=>{ if (g != '') counts[g]++}))
+    data.forEach(gs=>gs.split(';').forEach(g=>{ const h=fix(g); if (h != '') counts[h]++}))
     return _.pairs(counts).map(p=>{return { name: p[0], value: p[1]}})
 }
 class DreamsAndGoals extends React.Component {
@@ -294,7 +331,19 @@ class DreamsAndGoals extends React.Component {
         let dreamsData = countListOptions(dream)
         dreamsData.sort((a,b)=>b.value-a.value)
         let wall = this.props.map['Isoimmat esteet haaveilleni ovat kaiketi'] || []
-        let wallsData = countListOptions(wall)
+        let wallsData = countListOptions(wall,{
+            "Ei esteitä🤭": '',
+            'Kisaan pääsee vain arvonnan kautta':'Arvonnat',
+            'Covid':'Covid',
+            'Covid 19 aiheuttamat rajoitteet':'Covid',
+            'Sairastelu ja siitä hidas toipuminen':'Telakka',
+            'sitkeä rasitusvamma':'Telakka',
+            'ei mikään': '',
+            'Samanaikauset muut tavoitteet. Jos kisa olisi omien triathlonkisojen kauden ulkopuolella (loka-marraskuu?) ja sopivan budjettinen matka löytyisi, niin hyvinkin mahdollista!':'Muut haaveet',
+            'On olemassa muitakin haaveita ':'Muut haaveet',
+            'Työ on vaativaa ja usein puhti pois.':'Elämäntilanne',
+            'Elämäntilanne vaikkei ruuhkavuodet':'Elämäntilanne',
+        })
         wallsData.sort((a,b)=>b.value-a.value)
 
         const customizedLabel = ({x, y, fill, value}) => {
@@ -365,7 +414,9 @@ class DreamsAndGoals extends React.Component {
                 </BarChart>
 
                 { sumNonEmpty(wall) } vastasi suurimpiin esteisiin haaveiden toteuttamiseen.
-                Yllätys yllätys, suurin este harrastuksille on ajanpuute 😊
+                Suurin este harrastuksille on ajanpuute.
+                Huomioitava vastaus on myös kaverin puute ja ei uskalla kulkea yksin.
+                Toivottavasti tulevaisuudessa löytyy enemmän kavereita haaveita tukemaan.
             </div>
         );
     }
@@ -504,8 +555,8 @@ class Training extends React.Component {
                     <Bar dataKey="value" fill="#3a8887" />
                 </BarChart>
 
-                { sumNonEmpty(place) } vastaajan mukaan Laajis näyttää hävinneen kätevimmän
-                treenipaikan tittelin Halssilalle viimevuodesta.
+                { sumNonEmpty(place) } vastaajan mukaan Halssila on toista vuotta peräkkäin treenipaikka.
+                Kanavuori nokitti kakkoseksi Vaajakosken kanssa!
 
                 <h3>Logistiikka - siirtyminen treenipaikalle</h3>
 
@@ -612,16 +663,68 @@ class BestInJTR extends React.Component {
     render() {
 
         let best = this.props.map['Parasta yhteistoimintaa on ollut'] || []
-        best = countListOptions(best)
+        best = countListOptions(best, {
+            'Riikan ja Petterin 50v juoksut':'Riikan ja Petterin 50v backyard :)',
+            'Muutkin varmasti, mutta pikkujoulujen päivä on osunut töiden kanssa päällekkäin ja kisamatkoilla majoitus on ollut muulta käsin. Mukava siellä on ollut nähdä tuttuja kasvoja. ':'Muut',
+        })
         best.sort((a,b)=>b.value - a.value)
         const bestLabel = params => renderCustomizedLabel(params, best)
 console.log(best)
 
         return (
             <div>
-                <h2>Parasta Jyväskylä Trail Runners toiminnassa on vuonna 2019 ollut</h2>
+                <h2>Parasta Jyväskylä Trail Runners toiminnassa on vuonna 2021 ollut</h2>
 
                 <BarChart width={800} height={300} data={best}
+                    layout="vertical" 
+                    margin={{top: 5, right: 30, left: 400, bottom: 5}}>
+                    <CartesianGrid strokeDasharray="3 3"/>
+                    <XAxis type="number"/>
+                    <YAxis dataKey="name" type="category"  tick={{width: 450 }}/>
+                    <Tooltip/>
+                    <Bar dataKey="value" fill="#3a8887" />
+                </BarChart>
+
+            </div>
+        );
+    }
+}
+
+class LocalEvents extends React.Component {
+    render() {
+
+        let localEvent = _.pairs(counts(this.props.map['Osallistuin paikalliskisaan?'] || [])).map(p=>{return { name: p[0], value: p[1]}})
+        const localEventLabel = params => renderCustomizedLabel(params, localEvent)
+
+
+        let ifevent = this.props.map['Jos Jyväskylässä järjestettäisiin polkujuoksukisa, niin...'] || []
+        ifevent = countListOptions(ifevent, {
+            'Riikan ja Petterin 50v juoksut':'Riikan ja Petterin 50v backyard :)',
+            'Muutkin varmasti, mutta pikkujoulujen päivä on osunut töiden kanssa päällekkäin ja kisamatkoilla majoitus on ollut muulta käsin. Mukava siellä on ollut nähdä tuttuja kasvoja. ':'Muut',
+        })
+        ifevent.sort((a,b)=>b.value - a.value)
+
+        return (
+            <div>
+                <h2>Olen osallistunut paikalliskisaan?</h2>
+
+                <PieChart width={800} height={400} onMouseEnter={this.onPieEnter}>
+                    <Pie data={localEvent} cx={400} cy={200} 
+                        labelLine={false}
+                        label={localEventLabel}
+                        outerRadius={120} 
+                        fill="#8884d8"
+                    >
+                        {
+                            localEvent.map((entry, index) => <Cell fill={COLOR_MAP[localEvent.length][index]}/>)
+                        }
+                    </Pie>
+                </PieChart>
+
+
+                <h2>Jos Jyväskylässä järjestettäisiin kisa...</h2>
+
+                <BarChart width={800} height={300} data={ifevent}
                     layout="vertical" 
                     margin={{top: 5, right: 30, left: 400, bottom: 5}}>
                     <CartesianGrid strokeDasharray="3 3"/>
